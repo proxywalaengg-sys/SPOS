@@ -1,11 +1,11 @@
 // input.txt
 /*
 START 100
-MOVER AREG, A
-ADD BREG, B
-A DC 5
-B DS 1
-STOP
+** MOVER AREG, A
+** ADD BREG, B
+A DC 2
+B DS 5
+C DC 1
 END
 */
 
@@ -123,17 +123,19 @@ int main()
 // intermediate.txt
 /*
 100	START	100
-100	(IS,ADD)	BREG,	B
-101	(DL,01)	(C,5)
-102	(DL,02)	(C,1)
-103	(IS,00)
-104	END
+100 (IS,MOVER)  AREG,   B
+101	(IS,ADD)	AREG,	C
+102	(DL,02)	(C,2)
+104	(DL,01)	(C,5)
+105	(DL,01) (C,1)
+106	END
 */
 
 
 // symtab.txt
 /*
-A	100
-A	101
-B	102
+A	102
+B	104
+C	105
 */
+
