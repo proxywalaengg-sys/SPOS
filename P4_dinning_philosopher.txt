@@ -5,27 +5,31 @@
 using namespace std;
 
 const int NUM_PHILOSOPHERS = 5;
-mutex forks[NUM_PHILOSOPHERS]; //no of forks, one bw each.
+mutex forks[NUM_PHILOSOPHERS]; 
+mutex print_mutex; //  new mutex for synchronized console output
+
+void safe_print(const string &msg) {
+    lock_guard<mutex> lock(print_mutex);
+    cout << msg << endl;
+}
 
 void philosopher(int id) {
     int left = id;
     int right = (id + 1) % NUM_PHILOSOPHERS;
 
     for (int i = 0; i < 1; i++) {
-        cout << "Philosopher " << id << " is thinking" << endl;
+        safe_print("Philosopher " + to_string(id) + " is thinking");
         this_thread::sleep_for(chrono::milliseconds(500));
 
-        cout << "Philosopher " << id << " is hungry" << endl;
+        safe_print("Philosopher " + to_string(id) + " is hungry");
         lock(forks[left], forks[right]);
 
-        //to ensure unlocking
         lock_guard<mutex> left_fork(forks[left], adopt_lock);
         lock_guard<mutex> right_fork(forks[right], adopt_lock);
 
-        cout << "Philosopher " << id << " started eating" << endl;
+        safe_print("Philosopher " + to_string(id) + " started eating");
         this_thread::sleep_for(chrono::milliseconds(600));
-        cout << "Philosopher " << id << " finished eating" << endl;
-
+        safe_print("Philosopher " + to_string(id) + " finished eating");
     }
 }
 
@@ -38,7 +42,6 @@ int main() {
     
     for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
         philosophers[i].join();
-        
     }
-    cout << "Dinner done";
+    safe_print("Dinner done");
 }
