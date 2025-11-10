@@ -2,19 +2,11 @@
 // source.txt
 /*
 MACRO
-INCR
-MOVER AREG, DATA
-ADD AREG, ONE
-MOVEM AREG, DATA
+INCR &A, &B
+ADD &A, &B
 MEND
-
 START 100
-READ DATA
-INCR
-PRINT DATA
-STOP
-DATA DS 1
-ONE DC 1
+INCR AREG, BREG
 END
 */
 
@@ -116,12 +108,7 @@ Intermediate Code
 ----------------------------
 
 START 100
-READ DATA
-INCR
-PRINT DATA
-STOP
-DATA DS 1
-ONE DC 1
+INCR AREG, BREG
 END
 */
 
@@ -129,10 +116,8 @@ END
 /*
 MDT
 ----------------------------
-0: MOVER AREG, DATA
-1: ADD AREG, ONE
-2: MOVEM AREG, DATA
-3: MEND
+0: ADD &A, &B
+1: MEND
 */
 
 // mnt.txt
