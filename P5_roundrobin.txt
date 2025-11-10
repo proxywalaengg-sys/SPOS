@@ -1,0 +1,61 @@
+#include <queue>
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n, quantum;
+    cout << "Enter number of processes: ";
+    cin >> n;
+    cout << "\nEnter time quantum: ";
+    cin >> quantum;
+
+    int bt[n], arr_t[n], rt[n];
+    for (int i = 0; i < n; i++) {
+        cout << "\nEnter arrival and burst time for process " << i+1 << ": ";
+        cin >> arr_t[i] >> bt[i];
+        rt[i] = bt[i];
+    }
+    int current_time = 0;
+    int completed = 0;
+    queue<int> q;
+    bool inQueue[n] = {false};
+
+    q.push(0);
+    inQueue[0] = true;
+
+    while (!q.empty()) {
+        int i = q.front();
+        q.pop();
+        inQueue[i] = false;
+
+        if (rt[i] > quantum) {
+            rt[i] -= quantum;
+            current_time += quantum;
+            cout << "\nProcess " << i+1 << " executed till time: " << current_time;
+            cout << "\nRemaining time: " << rt[i];
+        } else {
+            current_time += rt[i];
+            rt[i] = 0;
+            completed++;
+            cout << "\nProcess " << i+1 << " finished at time " << current_time;
+        }
+
+        //check for new processes
+        for (int j = 0; j < n; j++) {
+            if (arr_t[j] <= current_time && rt[j] > 0 && !inQueue[j]) {
+                q.push(j);
+                inQueue[j] = true;
+            }
+        }
+        //if current process not done, readd it
+        if (q.empty()) {
+            for (int j = 0; j < n; j++) {
+                if (rt[j] > 0) {
+                    q.push(j);
+                    inQueue[j] = true;
+                    break;
+                }
+            }
+        }
+    }
+}
