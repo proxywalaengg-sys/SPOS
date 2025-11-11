@@ -184,6 +184,23 @@ MDT
 3: MEND
 */
 
+//intermediate.txt
+
+/*
+Intermediate code
+---------------------------
+
+START 100
+READ DATA
+INCR
+PRINT DATA
+STOP
+DATA DS 1
+ONE DC 1
+END
+*/
+
+
 // expanded.txt
 
 /*
@@ -200,4 +217,5 @@ STOP
 DATA DS 1
 ONE DC 1
 END
+
 */
