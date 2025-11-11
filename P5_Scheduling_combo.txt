@@ -14,6 +14,7 @@ struct Process
     int tat; // Turnaround Time
     int wt;  // Waiting Time
     int rt;  // Remaining Time
+
 };
 
 // Function to display the result table
@@ -147,26 +148,43 @@ void Priority(vector<Process> p)
 /*---------------------------------------------
     Round Robin
 ---------------------------------------------*/
-void RoundRobin(vector<Process> p, int quantum)
-{
-    cout << "\n=== Round Robin (Quantum = " << quantum << ") ===\n";
+void RoundRobin(vector<Process> &p, int quantum) {
+    cout << "\n====== Round Robin (Preemptive) ======\n";
     int n = p.size();
-    queue<int> q;
+    
+    // Sort processes by Arrival Time (AT)
+    sort(p.begin(), p.end(), [](const Process &a, const Process &b) {
+        return a.at < b.at; 
+    });
+
+    queue<int> q; // Ready queue, holds indices of processes in p
+    int time = 0;
+    int completed = 0;
     vector<bool> inQ(n, false);
-    int time = 0, completed = 0;
+    int last_arrival_check = 1; // Start checking from the second process (index 1)
+
+    // Initialize remaining burst time
     for (auto &x : p)
         x.rt = x.bt;
 
-    while (completed < n)
-    {
-        for (int i = 0; i < n; i++)
-            if (p[i].at <= time && !inQ[i] && p[i].rt > 0)
-                q.push(i), inQ[i] = true;
+    // Start with the first arrived process
+    time = p[0].at;
+    q.push(0);
+    inQ[0] = true;
 
-        if (q.empty())
-        {
-            time++;
-            continue;
+    while (completed < n) {
+        // If the queue is empty, advance time to the arrival of the next process
+        if (q.empty()) {
+            for (int i = 0; i < n; i++) {
+                if (p[i].rt > 0) {
+                    time = max(time, p[i].at); // Jump time to the next arrival
+                    q.push(i);
+                    inQ[i] = true;
+                    // Update last_arrival_check to ensure we don't re-add this on the next check
+                    last_arrival_check = i + 1; 
+                    break;
+                }
+            }
         }
 
         int idx = q.front();
@@ -177,19 +195,28 @@ void RoundRobin(vector<Process> p, int quantum)
         p[idx].rt -= exec;
         time += exec;
 
-        for (int i = 0; i < n; i++)
-            if (p[i].at <= time && !inQ[i] && p[i].rt > 0)
-                q.push(i), inQ[i] = true;
-
-        if (p[idx].rt == 0)
-        {
-            completed++;
+        // --- Step 1: Add newly arrived processes ---
+        // Processes are sorted by AT, so we only need to check from last_arrival_check
+        while (last_arrival_check < n && p[last_arrival_check].at <= time) {
+            if (p[last_arrival_check].rt > 0 && !inQ[last_arrival_check]) {
+                q.push(last_arrival_check);
+                inQ[last_arrival_check] = true;
+            }
+            last_arrival_check++;
+        }
+        
+        // --- Step 2: Handle completion or preemption ---
+        if (p[idx].rt == 0) {
+            // Process completed
             p[idx].ct = time;
             p[idx].tat = p[idx].ct - p[idx].at;
             p[idx].wt = p[idx].tat - p[idx].bt;
+            completed++;
+        } else {
+            // Process preempted, add back to the end of the queue
+            q.push(idx);
+            inQ[idx] = true;
         }
-        else
-            q.push(idx), inQ[idx] = true;
     }
 
     display(p);
