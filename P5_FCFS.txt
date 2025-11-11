@@ -38,8 +38,8 @@ void FCFS(vector<Process> p, int n) {
         total_TAT += pr.turnaround;
         total_WT += pr.waiting;
     }
-    cout << "Average turnaround time: " << total_TAT / n;
-    cout << "Average Waiting time: " << total_WT / n;
+    cout << "Average turnaround time: " << total_TAT / n << endl;
+    cout << "Average Waiting time: " << total_WT / n << endl;
 }
 
 int main () {
@@ -58,4 +58,5 @@ int main () {
 
 
     return 0;
+
 }
