@@ -1,61 +1,137 @@
-#include <queue>
 #include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cmath> // For std::max
+
 using namespace std;
 
-int main() {
-    int n, quantum;
-    cout << "Enter number of processes: ";
-    cin >> n;
-    cout << "\nEnter time quantum: ";
-    cin >> quantum;
+// Structure to hold process details
+struct Process {
+    int pid, at, bt, ct, tat, wt;
+    int remaining; // internal use only
+};
 
-    int bt[n], arr_t[n], rt[n];
-    for (int i = 0; i < n; i++) {
-        cout << "\nEnter arrival and burst time for process " << i+1 << ": ";
-        cin >> arr_t[i] >> bt[i];
-        rt[i] = bt[i];
+// Function to display the results
+void display(const vector<Process> &p) {
+    cout << "\nPID\tAT\tBT\tCT\tTAT\tWT\n";
+    for (const auto &x : p)
+        cout << "P" << x.pid << "\t" << x.at << "\t" << x.bt << "\t"
+             << x.ct << "\t" << x.tat << "\t" << x.wt << "\n";
+}
+
+// Function to calculate and display averages
+void average(const vector<Process> &p) {
+    float avg_tat = 0, avg_wt = 0;
+    for (const auto &x : p) {
+        avg_tat += x.tat;
+        avg_wt += x.wt;
     }
-    int current_time = 0;
+    cout << "Average Turnaround Time: " << avg_tat / p.size() << endl;
+    cout << "Average Waiting Time: " << avg_wt / p.size() << endl;
+}
+
+// Round Robin Scheduling Algorithm
+void RoundRobin(vector<Process> &p, int quantum) {
+    cout << "\n====== Round Robin (Preemptive) ======\n";
+    int n = p.size();
+    
+    // Sort processes by Arrival Time (AT)
+    sort(p.begin(), p.end(), [](const Process &a, const Process &b) {
+        return a.at < b.at; 
+    });
+
+    queue<int> q; // Ready queue, holds indices of processes in p
+    int time = 0;
     int completed = 0;
-    queue<int> q;
-    bool inQueue[n] = {false};
+    vector<bool> inQ(n, false);
+    int last_arrival_check = 1; // Start checking from the second process (index 1)
 
+    // Initialize remaining burst time
+    for (auto &x : p)
+        x.remaining = x.bt;
+
+    // Start with the first arrived process
+    time = p[0].at;
     q.push(0);
-    inQueue[0] = true;
+    inQ[0] = true;
 
-    while (!q.empty()) {
-        int i = q.front();
-        q.pop();
-        inQueue[i] = false;
-
-        if (rt[i] > quantum) {
-            rt[i] -= quantum;
-            current_time += quantum;
-            cout << "\nProcess " << i+1 << " executed till time: " << current_time;
-            cout << "\nRemaining time: " << rt[i];
-        } else {
-            current_time += rt[i];
-            rt[i] = 0;
-            completed++;
-            cout << "\nProcess " << i+1 << " finished at time " << current_time;
-        }
-
-        //check for new processes
-        for (int j = 0; j < n; j++) {
-            if (arr_t[j] <= current_time && rt[j] > 0 && !inQueue[j]) {
-                q.push(j);
-                inQueue[j] = true;
-            }
-        }
-        //if current process not done, readd it
+    while (completed < n) {
+        // If the queue is empty, advance time to the arrival of the next process
         if (q.empty()) {
-            for (int j = 0; j < n; j++) {
-                if (rt[j] > 0) {
-                    q.push(j);
-                    inQueue[j] = true;
+            for (int i = 0; i < n; i++) {
+                if (p[i].remaining > 0) {
+                    time = max(time, p[i].at); // Jump time to the next arrival
+                    q.push(i);
+                    inQ[i] = true;
+                    // Update last_arrival_check to ensure we don't re-add this on the next check
+                    last_arrival_check = i + 1; 
                     break;
                 }
             }
         }
+
+        int idx = q.front();
+        q.pop();
+        inQ[idx] = false;
+
+        int exec = min(quantum, p[idx].remaining);
+        p[idx].remaining -= exec;
+        time += exec;
+
+        // --- Step 1: Add newly arrived processes ---
+        // Processes are sorted by AT, so we only need to check from last_arrival_check
+        while (last_arrival_check < n && p[last_arrival_check].at <= time) {
+            if (p[last_arrival_check].remaining > 0 && !inQ[last_arrival_check]) {
+                q.push(last_arrival_check);
+                inQ[last_arrival_check] = true;
+            }
+            last_arrival_check++;
+        }
+        
+        // --- Step 2: Handle completion or preemption ---
+        if (p[idx].remaining == 0) {
+            // Process completed
+            p[idx].ct = time;
+            p[idx].tat = p[idx].ct - p[idx].at;
+            p[idx].wt = p[idx].tat - p[idx].bt;
+            completed++;
+        } else {
+            // Process preempted, add back to the end of the queue
+            q.push(idx);
+            inQ[idx] = true;
+        }
     }
+
+    display(p);
+    average(p);
+}
+
+int main() {
+    // Standard I/O for input
+    int n, q;
+    cout << "Enter number of processes: ";
+    if (!(cin >> n) || n <= 0) {
+        cerr << "Invalid number of processes.\n";
+        return 1;
+    }
+
+    vector<Process> p(n);
+    for (int i = 0; i < n; i++) {
+        p[i].pid = i + 1;
+        cout << "Enter AT and BT for P" << i + 1 << ": ";
+        if (!(cin >> p[i].at >> p[i].bt) || p[i].at < 0 || p[i].bt <= 0) {
+            cerr << "Invalid AT or BT for P" << i + 1 << ".\n";
+            return 1;
+        }
+    }
+
+    cout << "Enter Time Quantum: ";
+    if (!(cin >> q) || q <= 0) {
+        cerr << "Invalid time quantum.\n";
+        return 1;
+    }
+
+    RoundRobin(p, q);
+    return 0;
 }
